@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mensagem aula</title>
+</head>
+
+<body>
+    <script id="scriptAdd">
+        document.body.onload = addElements;
+
+        function addGreeting() {
+            const greetingBox = document.createElement('input')
+            greetingBox.type = "text";
+
+            const label = document.createElement('label');
+            label.innerText = "Saudação"
+            label.appendChild(greetingBox);
+
+            return label;
+        }
+
+        function addLink(event) {
+            event.preventDefault();
+
+            const itens = document.createElement('li');
+            const select = document.createElement('select');
+            itens.appendChild(select)
+
+            const disabledOption = document.createElement('option');
+            disabledOption.disabled = true;
+            disabledOption.selected = true;
+            disabledOption.innerText = "Selecione a opção";
+            select.appendChild(disabledOption)
+            const options = ["Documentação", "Artigo", "Video", "Canal", "Repositório", "Conteúdo"]
+            options.sort();
+            for (const option of options) {
+                const optionElement = document.createElement('option');
+                optionElement.innerText = option;
+                select.appendChild(optionElement);
+            }
+
+            const descricao = document.createElement('input');
+            descricao.type = "text";
+            descricao.placeholder = "Descrição";
+            descricao.class = 'descricao';
+            itens.appendChild(descricao);
+
+            const link = document.createElement('input');
+            link.type = "text";
+            link.placeholder = "Link";
+            link.class = 'link';
+            itens.appendChild(link);
+
+            const cancel = document.createElement('button');
+            cancel.innerText = "X";
+            cancel.onclick = (e) => {
+                e.preventDefault();
+                listaItens.removeChild(itens)
+            }
+            itens.appendChild(cancel);
+
+
+
+            const listaItens = document.getElementById('listaTarefas');
+            listaItens.appendChild(itens);
+
+        }
+
+        function addLinks() {
+            const ul = document.createElement('ul');
+            ul.id = "listaTarefas";
+
+            const buttonAddItem = document.createElement('button');
+            buttonAddItem.innerText = "Adicionar link"
+            ul.appendChild(buttonAddItem);
+
+            buttonAddItem.addEventListener('click', addLink)
+
+            return ul;
+        }
+
+        function addValores() {
+            const div = document.createElement('div');
+            const duracao = document.createElement('input');
+            duracao.type = "text";
+            duracao.id = 'duracao';
+
+            const label = document.createElement('label');
+            label.innerText = "Duração da aula:"
+            label.appendChild(duracao);
+
+            const valor = document.createElement('input')
+            valor.type = "text";
+            valor.id = 'valor'
+
+            const labelValor = document.createElement('label');
+            labelValor.innerText = "Valor da hora aula em R$"
+            labelValor.appendChild(valor);
+
+            div.appendChild(label);
+            div.appendChild(labelValor);
+            return div;
+
+        }
+
+        function addElements() {
+            const form = document.createElement("form");
+
+            form.appendChild(addGreeting())
+            form.appendChild(addLinks());
+            form.appendChild(addValores());
+
+            const submitButton = document.createElement('button');
+            submitButton.innerText = "Gerar mensagem"
+            form.appendChild(submitButton);
+
+            form.onsubmit = submitForm;
+
+
+            const script = document.getElementById("scriptAdd")
+            document.body.insertBefore(form, script)
+            const resposta = document.createElement('div')
+            resposta.id = "resposta";
+            document.body.insertBefore(resposta, script)
+        }
+
+        function submitForm(event) {
+            event.preventDefault();
+            const campos = event.target;
+            const saudacao = campos[0].value;
+
+            // rodar os selects e colar com formatacao
+            const categoria = [];
+            const descricoes = [];
+            const links = [];
+            let valor = null;
+            let duracao = null;
+
+            for (campo of campos) {
+                // Pega seletores                 
+                if (campo.type === 'select-one') {
+                    const valorSelecionado = campo[campo.selectedIndex].value
+                    categoria.push(valorSelecionado)
+                }
+
+                // Pega campos de texto abaixo dos seletores
+                if (campo.class === 'descricao') {
+                    const descricao = campo.value;
+                    descricoes.push(descricao)
+                }
+
+                if (campo.class === 'link') {
+                    const link = campo.value;
+                    links.push(link)
+                }
+
+                if (campo.id === 'duracao') {
+                    duracao = campo.value;
+                }
+
+                if (campo.id === 'valor') {
+                    valor = campo.value;
+                }
+            }
+
+            const objLinks = [];
+            for (let i = 0; i < categoria.length; i++) {
+                objLinks.push({ categoria: categoria[i], descricao: descricoes[i], link: links[i] })
+
+            }
+
+            console.log(campos);
+
+            // Criar o relatório em si
+
+            const resposta = document.getElementById('resposta')
+            resposta.innerHTML = `${saudacao}
+            
+            <p>
+            Seguem os links da última aula:
+            </p>
+            
+            <ul>
+            ${objLinks.reduce((updated, latest) => updated.concat(`<li>* [${latest.categoria}] ${latest.descricao} - ${latest.link}</li>`), '')}
+            </ul>
+
+            <p>
+            Valores da última aula: ${formatNum(duracao)}h a R$${formatNum(valor)} a hora aula somado à R$15,00 totalizam
+            </p>
+            <p>
+	R$${formatNum(duracao * valor + 15)}
+    </p>
+
+    <p>
+	Pode ser enviado para o PIX 116.857.174-03 - João Manoel Lima
+    </p>
+            `
+
+            const botaoCopiar = document.createElement('button');
+            botaoCopiar.innerText = "Copiar mensagem";
+            botaoCopiar.onclick = () => {navigator.clipboard.writeText(resposta.innerText.substring(0, resposta.innerText.length-17))};
+
+            console.log(resposta)
+            resposta.appendChild(botaoCopiar)
+            
+            
+        }
+
+        function formatNum(num) {
+            return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        }
+
+    </script>
+</body>
+
+</html>
